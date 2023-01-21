@@ -11,7 +11,7 @@ variable "BUILDKIT_PROGRESS" {
 }
 
 variable "CACHEBUST" {
-  default = "0"
+  default = 0
 }
 
 variable "PACKAGE_VERSION" {
@@ -58,8 +58,8 @@ variable "BUILD_FLAGS" {
 group "default" {
   targets = [
     "main",
-    "other",
-    "darwin",
+    // "other",
+    // "darwin",
   ]
 }
 

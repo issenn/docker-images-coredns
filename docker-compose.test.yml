@@ -22,7 +22,7 @@ services:
         GOPROXY: https://proxy.golang.org,direct
         CGO_ENABLED: 0
         BUILD_FLAGS: "-v"
-    command: -config /etc/dnscrypt-proxy/dnscrypt-proxy.toml -loglevel 0
+    command: -conf /etc/coredns/Corefile
 
   version:
     image: localhost:5000/sut
