@@ -1,0 +1,70 @@
+# EditorConfig is awesome: https://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = false
+insert_final_newline = false
+
+# Unix-style newlines with a newline ending every file
+# Use UTF-8 by default
+[*]
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[_*]
+indent_style = space
+indent_size = 2
+tab_width = 2
+end_of_line = lf
+
+[VERSION]
+insert_final_newline = false
+
+[ChangeLog]
+indent_size = 8
+
+[Makefile]
+indent_style = tab
+indent_size = 8
+tab_width = 4
+
+[Dockerfile]
+indent_style = space
+indent_size = 2
+
+[docker-bake{,.override}.{json,hcl}]
+indent_style = space
+indent_size = 2
+
+# Use 4 spaces for indentation in Markdown files
+[*.md]
+indent_style = unset
+indent_size = unset
+trim_trailing_whitespace = unset
+insert_final_newline = unset
+
+[*.{json,json5}]
+indent_style = space
+indent_size = 2
+
+[.vscode/*.json]
+indent_style = space
+indent_size = 2
+
+[bin/*]
+indent_style = space
+indent_size = 2
+
+[*.{sh,zsh}]
+indent_style = space
+indent_size = 2
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2

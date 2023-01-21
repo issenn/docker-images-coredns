@@ -1,0 +1,3 @@
+brew "hadolint"
+
+cask "docker"

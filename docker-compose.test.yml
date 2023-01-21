@@ -1,0 +1,61 @@
+version: "3.9"
+
+name: "coredns"
+
+services:
+
+  server:
+    image: localhost:5000/sut
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PACKAGE_NAME: coredns
+        PACKAGE_VERSION: 1.10.0
+        PACKAGE_VERSION_PREFIX: "v"
+        PACKAGE_URL: https://github.com/coredns/coredns
+        PACKAGE_SOURCE_URL: https://github.com/coredns/coredns/archive/v1.10.0.tar.gz
+        PACKAGE_HEAD_URL: https://github.com/coredns/coredns.git
+        PACKAGE_HEAD: false
+        CACHEBUST: https://api.github.com/repos/issenn/docker-images-coredns/git/refs/heads/master
+        GO111MODULE: on
+        GOPROXY: https://proxy.golang.org,direct
+        CGO_ENABLED: 0
+        BUILD_FLAGS: "-v"
+    command: -config /etc/dnscrypt-proxy/dnscrypt-proxy.toml -loglevel 0
+
+  version:
+    image: localhost:5000/sut
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PACKAGE_NAME: coredns
+        PACKAGE_VERSION: 1.10.0
+        PACKAGE_VERSION_PREFIX: "v"
+        PACKAGE_URL: https://github.com/coredns/coredns
+        PACKAGE_SOURCE_URL: https://github.com/coredns/coredns/archive/v1.10.0.tar.gz
+        PACKAGE_HEAD_URL: https://github.com/coredns/coredns.git
+        PACKAGE_HEAD: false
+        CACHEBUST: https://api.github.com/repos/issenn/docker-images-coredns/git/refs/heads/master
+        GO111MODULE: on
+        GOPROXY: https://proxy.golang.org,direct
+        CGO_ENABLED: 0
+        BUILD_FLAGS: "-v"
+    command: -version
+
+  sut:
+    image: alpine:3.17
+    depends_on:
+      - server
+      - version
+    entrypoint: ""
+    command: >-
+      /bin/sh -c '
+      apk add --no-cache --update-cache bind-tools &&
+      dig @server -p 5053 dnssec.works +dnssec +multi | tee /dev/stderr | grep -wq NOERROR &&
+      dig @server -p 5053 fail01.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)" &&
+      dig @server -p 5053 fail02.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)" &&
+      dig @server -p 5053 fail03.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)" &&
+      dig @server -p 5053 fail04.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)"
+      '

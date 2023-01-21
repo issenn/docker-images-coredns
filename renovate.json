@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "regexManagers": [
+    {
+      "description": "Update _VERSION variables in Dockerfiles",
+      "fileMatch": [
+        "(^|\\/|\\.)Dockerfile$",
+        "(^|\\/)Dockerfile\\.[^/]*$"
+      ],
+      "matchStrings": [
+        "ARG DNSCRYPT_PROXY_VERSION[= ]v?(?<currentValue>.*?)\\n"
+      ],
+      "depNameTemplate": "DNSCrypt/dnscrypt-proxy",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^(?<extractVersion>.*)$",
+      "versioningTemplate": "{{#if versioning}}{{versioning}}{{else}}semver{{/if}}"
+    },
+    {
+      "description": "Update version variables in VERSION",
+      "fileMatch": [
+        "^VERSION$"
+      ],
+      "matchStrings": [
+        "^v?(?<currentValue>.*?)\\n?"
+      ],
+      "depNameTemplate": "DNSCrypt/dnscrypt-proxy",
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^(?<version>.*)$",
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
+  ],
+  "prHourlyLimit": 3,
+  "labels": [
+    "renovate",
+    "dependencies"
+  ],
+  "automergeType": "pr-comment",
+  "automergeComment": "@renovate I self-certify!",
+  "commitMessageExtra": "to {{{replace 'v' '' newVersion}}}",
+  "commitBody": "Update {{depName}} to {{{replace 'v' '' newVersion}}}\n\nUpdate {{depName}} from {{{replace 'v' '' currentVersion}}} to {{{replace 'v' '' newVersion}}}\n\nChange-type: {{#if (or isPatch (containsString depType 'devDependencies'))}}patch{{else}}minor{{/if}}",
+  "prConcurrentLimit": 2,
+  "branchConcurrentLimit": 2,
+  "extends": [
+    "config:base"
+  ]
+}

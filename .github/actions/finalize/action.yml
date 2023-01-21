@@ -1,0 +1,139 @@
+---
+
+# https://docs.github.com/en/actions/creating-actions/creating-a-composite-action
+name: "Finalize custom"
+description: "Custom finalize step to run after a merge or tag"
+# this inputs are always provided by flowzone, so they must always be defined on the composite action
+inputs:
+  json:
+    description: "JSON stringified object containing all the inputs from the calling workflow"
+    required: true
+  secrets:
+    description: "JSON stringified object containing all the secrets from the calling workflow"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Get latest tag for current branch
+      continue-on-error: true
+      id: old_version
+      # if: |
+      #   ${{ fromJSON(inputs.json).disable_versioning }} != true
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        tag="$(git tag --list --sort=-version:refname "v*.*.*" --merged | head -n1)"
+        echo "semver=${tag/v/}" >> $GITHUB_OUTPUT
+        echo "tag=${tag}" >> $GITHUB_OUTPUT
+
+    - name: Git describe
+      id: git_describe
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: echo "tag=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
+
+    - name: Inspect versioned files
+      id: new_version
+      # if: |
+      #   ${{ fromJSON(inputs.json).disable_versioning }} != true
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        semver="$(cat < VERSION)"
+        echo "semver=${semver}" >> $GITHUB_OUTPUT
+        echo "tag=v${semver}" >> $GITHUB_OUTPUT
+
+    - name: Convert docker_images to a JSON array
+      id: docker_images
+      if: |
+        join(fromJSON(inputs.json).docker_images) != ''
+      uses: kanga333/json-array-builder@c7cd9d3a8b17cd368e9c2210bc3c16b0e2714ce5
+      env:
+        INPUT: ${{ fromJSON(inputs.json).docker_images }}
+      with:
+        cmd: bash -c "echo $INPUT | tr -d '[:space:]'"
+        separator: ","
+
+    - name: Set env vars
+      if: |
+        join(fromJSON(inputs.json).docker_images) != ''
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        DOCKER_IMAGES="$(echo "${{ join(fromJSON(steps.docker_images.outputs.build),' ') }}" | tr " " "\n")"
+        echo "DOCKER_IMAGES<<EOF" >> $GITHUB_ENV
+        echo "${DOCKER_IMAGES}" >> $GITHUB_ENV
+        echo "EOF" >> $GITHUB_ENV
+
+    - name: Generate versioned labels and tags
+      id: meta1
+      if: |
+        ${{ fromJSON(inputs.json).disable_versioning }} != true &&
+        join(fromJSON(inputs.json).docker_images) != '' &&
+        steps.new_version.outputs.semver != ''
+      uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
+      with:
+        images: |
+          ${{ env.DOCKER_IMAGES }}
+        tags: |
+          type=raw,value=${{ github.base_ref || github.ref_name }}
+          type=raw,value=${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
+          type=raw,value=${{ steps.new_version.outputs.semver }}
+        flavor: |
+          latest=true
+          prefix=${{ env.PREFIX }},onlatest=true
+
+    - name: Generate labels and tags
+      id: meta2
+      if: |
+        ${{ fromJSON(inputs.json).disable_versioning }} == true &&
+        join(fromJSON(inputs.json).docker_images) != '' &&
+        steps.new_version.outputs.semver != ''
+      uses: docker/metadata-action@57396166ad8aefe6098280995947635806a0e6ea
+      with:
+        images: |
+          ${{ env.DOCKER_IMAGES }}
+        tags: |
+          type=raw,value=${{ github.base_ref || github.ref_name }}
+          type=raw,value=${{ steps.new_version.outputs.tag || steps.git_describe.outputs.tag }}
+          type=raw,value=${{ steps.new_version.outputs.semver }}
+          type=ref,event=tag
+          type=semver,pattern={{version}}
+        flavor: |
+          latest=true
+          prefix=${{ env.PREFIX }},onlatest=true
+
+    - name: Login to GitHub Container Registry
+      continue-on-error: true
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+      with:
+        registry: ghcr.io
+        username: ${{ env.GHCR_USER }}
+        password: ${{ fromJSON(inputs.secrets).GHCR_TOKEN || fromJSON(inputs.secrets).FLOWZONE_TOKEN }}
+    - name: Login to Docker Hub
+      continue-on-error: true
+      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+      with:
+        registry: docker.io
+        username: ${{ fromJSON(inputs.secrets).DOCKERHUB_USER || fromJSON(inputs.secrets).DOCKER_REGISTRY_USER }}
+        password: ${{ fromJSON(inputs.secrets).DOCKERHUB_TOKEN || fromJSON(inputs.secrets).DOCKER_REGISTRY_PASS }}
+    - name: Publish final tags
+      uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
+      with:
+        src: ${{ fromJSON(steps.docker_images.outputs.build)[0] }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
+        dst: |
+          ${{ steps.meta1.outputs.tags }}
+          ${{ steps.meta2.outputs.tags }}
+    - name: Strip docker.io prefix
+      if: (startsWith(matrix.image, 'docker.io') || !contains(matrix.image, '.'))
+      id: dockerhub
+      env:
+        IMAGE: ${{ matrix.image }}
+      shell: bash --noprofile --norc -eo pipefail -x {0}
+      run: |
+        echo "repository=${IMAGE#*/}" >> $GITHUB_OUTPUT
+    - name: Update DockerHub Description
+      if: steps.dockerhub.outputs.repository != '' && github.base_ref == github.event.repository.default_branch
+      continue-on-error: true
+      uses: peter-evans/dockerhub-description@93b93397c27ed52b4055b8c6b2f8d92456ab3c56
+      with:
+        username: ${{ fromJSON(inputs.secrets).DOCKERHUB_USER || fromJSON(inputs.secrets).DOCKER_REGISTRY_USER }}
+        password: ${{ fromJSON(inputs.secrets).DOCKERHUB_TOKEN || fromJSON(inputs.secrets).DOCKER_REGISTRY_PASS }}
+        repository: ${{ steps.dockerhub.outputs.repository }}
+        readme-filepath: ./README.md
