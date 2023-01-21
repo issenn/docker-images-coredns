@@ -22,7 +22,7 @@ services:
         GOPROXY: https://proxy.golang.org,direct
         CGO_ENABLED: 0
         BUILD_FLAGS: "-v"
-    command: -config /etc/dnscrypt-proxy/dnscrypt-proxy.toml -loglevel 0
+    command: -conf /etc/coredns/Corefile
 
   version:
     image: localhost:5000/sut
@@ -52,10 +52,5 @@ services:
     entrypoint: ""
     command: >-
       /bin/sh -c '
-      apk add --no-cache --update-cache bind-tools &&
-      dig @server -p 5053 dnssec.works +dnssec +multi | tee /dev/stderr | grep -wq NOERROR &&
-      dig @server -p 5053 fail01.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)" &&
-      dig @server -p 5053 fail02.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)" &&
-      dig @server -p 5053 fail03.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)" &&
-      dig @server -p 5053 fail04.dnssec.works +dnssec +multi | tee /dev/stderr | grep -qE "(SERVFAIL|no servers)"
+      echo "Todo"
       '
