@@ -21,8 +21,9 @@ RUN apk --no-cache add \
     ca-certificates=~20220614 && \
     sync
 
-ARG GIT_REF
+ARG GIT_CLONE_FLAGS
 ARG PACKAGE_NAME
+ARG PACKAGE_GIT_REF
 ARG PACKAGE_VERSION
 ARG PACKAGE_VERSION_PREFIX
 ARG PACKAGE_URL
@@ -35,17 +36,25 @@ RUN { [ -n "${PACKAGE_VERSION_PREFIX}" ] && [ -n "${PACKAGE_VERSION}" ] && PACKA
     mkdir -p "/usr/local/src/${PACKAGE_NAME}" && \
     [ -n "${PACKAGE_NAME}" ] && \
     { { [ -n "${PACKAGE_HEAD_URL}" ] && \
-        git clone "${PACKAGE_HEAD_URL}" "/usr/local/src/${PACKAGE_NAME}" && \
-        { { { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
-              git -C "/usr/local/src/${PACKAGE_NAME}" checkout tags/${PACKAGE_VERSION}; } && \
-            { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ]; }; } || \
-          { { ! { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
-              git -C "/usr/local/src/${PACKAGE_NAME}" checkout tags/${PACKAGE_VERSION}; }; } && \
-            { ! { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ]; }; }; }; }; } || \
-      { [ -n "${PACKAGE_SOURCE_URL}" ] && curl -fsSL "${PACKAGE_SOURCE_URL}" | \
+      { echo "Git clone ${PACKAGE_HEAD_URL} ..." && git clone ${GIT_CLONE_FLAGS} "${PACKAGE_HEAD_URL}" "/usr/local/src/${PACKAGE_NAME}" && \
+        { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
+          { { { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
+                echo "Git checkout to tags/${PACKAGE_VERSION}" && git -C "/usr/local/src/${PACKAGE_NAME}" checkout tags/${PACKAGE_VERSION}; } && \
+              { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ]; }; } || \
+            { { ! { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
+                echo "Git checkout to tags/${PACKAGE_VERSION}" && git -C "/usr/local/src/${PACKAGE_NAME}" checkout tags/${PACKAGE_VERSION}; }; } && \
+              { ! { [ -n "${PACKAGE_VERSION}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ]; }; }; }; }; } || \
+        { [ -n "${PACKAGE_GIT_REF}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
+          { { { [ -n "${PACKAGE_GIT_REF}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
+                echo "Git checkout to refs/${PACKAGE_GIT_REF}" && git -C "/usr/local/src/${PACKAGE_NAME}" checkout ${PACKAGE_GIT_REF}; } && \
+              { [ -n "${PACKAGE_GIT_REF}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ]; }; } || \
+            { { ! { [ -n "${PACKAGE_GIT_REF}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ] && \
+                echo "Git checkout to refs/${PACKAGE_GIT_REF}" && git -C "/usr/local/src/${PACKAGE_NAME}" checkout ${PACKAGE_GIT_REF}; }; } && \
+              { ! { [ -n "${PACKAGE_GIT_REF}" ] && [ "${PACKAGE_HEAD}" != true ] && [ "${PACKAGE_HEAD}" != "on" ] && [ "${PACKAGE_HEAD}" != "1" ]; }; }; }; }; }; }; } || \
+      { [ -n "${PACKAGE_SOURCE_URL}" ] && echo "curl download ${PACKAGE_SOURCE_URL}" && curl -fsSL "${PACKAGE_SOURCE_URL}" | \
         tar -zxC "/usr/local/src/${PACKAGE_NAME}" --strip 1; } || \
-      { [ -n "${PACKAGE_URL}" ] && [ -n "${PACKAGE_VERSION}" ] && \
-        curl -fsSL "${PACKAGE_URL}/archive/${PACKAGE_VERSION}.tar.gz" | \
+      { [ -n "${PACKAGE_URL}" ] && [ -n "${PACKAGE_GIT_REF}" ] && \
+        echo "curl download ${PACKAGE_URL}/archive/${PACKAGE_GIT_REF}.tar.gz" && curl -fsSL "${PACKAGE_URL}/archive/${PACKAGE_GIT_REF}.tar.gz" | \
         tar -zxC "/usr/local/src/${PACKAGE_NAME}" --strip 1; }; } || false
 
 COPY patch/plugin/forward/forward.go.patch patch/plugin/forward/setup.go.patch /usr/local/src/patch/plugin/forward/

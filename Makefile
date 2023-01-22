@@ -7,13 +7,22 @@
 AUTHOR                     ?= issenn
 
 PACKAGE_NAME               ?= coredns
+PACKAGE_GIT_REF            ?=
 PACKAGE_VERSION            ?= 1.10.0
 PACKAGE_VERSION_PREFIX     ?= v
+PACKAGE_HEAD               ?= false
+ifndef PACKAGE_GIT_REF
+    PACKAGE_GIT_REF        := master
+endif
+ifeq ($(PACKAGE_HEAD), true)
+    PACKAGE_GIT_REF        := master
+endif
 PACKAGE_URL                ?= https://github.com/coredns/coredns
 PACKAGE_SOURCE_URL         ?= https://github.com/coredns/coredns/archive/v1.10.0.tar.gz
 PACKAGE_HEAD_URL           ?= https://github.com/coredns/coredns.git
-PACKAGE_HEAD               ?= false
 DEBUG                      ?= false
+
+GIT_CLONE_FLAGS            ?=
 
 PROXY                      ?= socks5://10.0.0.131:10810
 NO_PROXY                   ?= localhost,127.0.0.1,10.0.0.102:3000
@@ -61,7 +70,7 @@ DOCKER_VERSION             := $(shell docker --version)
 CACHEBUST                  ?= https://api.github.com/repos/$(AUTHOR)/docker-images-${PACKAGE_NAME}/git/refs/heads/master
 
 ifeq ($(DEBUG), true)
-    CACHEBUST              ?= http://date.jsontest.com
+    CACHEBUST              := http://date.jsontest.com
 endif
 
 DOCKER_BUILD_FLAGS         ?=
@@ -123,18 +132,20 @@ all: build
 
 .PHONY : debug
 debug:
-	env USE_PROXY=true BUILDKIT_PROGRESS=plain PACKAGE_HEAD=off GOPROXY_PRIVATE=true DOCKER_BUILD_NO_CACHE=true DEBUG=true make
+	env USE_PROXY=true BUILDKIT_PROGRESS=plain PACKAGE_HEAD=off GOPROXY_PRIVATE=true DOCKER_BUILD_NO_CACHE=true GIT_CLONE_FLAGS=" --depth=1" DEBUG=true make
 
 build:
 	env DOCKER_BUILDKIT=$(DOCKER_BUILDKIT) BUILDKIT_PROGRESS=$(BUILDKIT_PROGRESS) \
 	    docker build -t $(REPOSITORY):$(IMAGE_TAG) $(DOCKER_BUILD_FLAGS) \
 	        --label $(LABEL) \
+	        --build-arg GIT_CLONE_FLAGS="$(GIT_CLONE_FLAGS)" \
 	        --build-arg GO111MODULE="${GO111MODULE}" \
 	        --build-arg GOPROXY="${GOPROXY}" \
 	        --build-arg GOSUMDB="${GOSUMDB}" \
 	        --build-arg CGO_ENABLED="${CGO_ENABLED}" \
 	        --build-arg BUILD_FLAGS="${BUILD_FLAGS}" \
 	        --build-arg PACKAGE_NAME="$(PACKAGE_NAME)" \
+	        --build-arg PACKAGE_GIT_REF="$(PACKAGE_GIT_REF)" \
 	        --build-arg PACKAGE_VERSION="$(PACKAGE_VERSION)" \
 	        --build-arg PACKAGE_VERSION_PREFIX="$(PACKAGE_VERSION_PREFIX)" \
 	        --build-arg PACKAGE_HEAD_URL="$(PACKAGE_HEAD_URL)" \
@@ -160,6 +171,6 @@ clean-docker-cache:
 
 .PHONY : clean-docker-cache-all
 clean-docker-cache-all:
-	docker builder prune
+	docker builder prune -a
 
 .PHONY : default options help all build version test compile clean
