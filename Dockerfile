@@ -159,6 +159,8 @@ COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /usr/local/src/${PACKAGE_NAME}/${PACKAGE_NAME} /usr/local/bin/
 COPY --from=build --chown=nobody:nogroup /etc/${PACKAGE_NAME} /etc/${PACKAGE_NAME}
 
+WORKDIR /etc/${PACKAGE_NAME}
+
 # TODO: switch to 'nonroot' user
 USER nobody
 
