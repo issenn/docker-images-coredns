@@ -9,6 +9,7 @@ services:
       dockerfile: Dockerfile
       args:
         PACKAGE_NAME: coredns
+        PACKAGE_GIT_REF: ""
         PACKAGE_VERSION: 1.10.0
         PACKAGE_VERSION_PREFIX: "v"
         PACKAGE_URL: https://github.com/coredns/coredns

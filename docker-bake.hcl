@@ -6,6 +6,10 @@ variable "GIT_CLONE_FLAGS" {
   default = ""
 }
 
+variable "PACKAGE_GIT_REF" {
+  default = ""
+}
+
 variable "DOCKER_BUILDKIT" {
   default = true
 }
@@ -83,6 +87,7 @@ target "main" {
   ]
   args = {
     PACKAGE_NAME = "coredns"
+    PACKAGE_GIT_REF = ""
     PACKAGE_VERSION = "1.10.0"
     PACKAGE_VERSION_PREFIX = PACKAGE_VERSION_PREFIX
     PACKAGE_URL = "https://github.com/coredns/coredns"
