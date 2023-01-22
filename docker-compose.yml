@@ -15,6 +15,7 @@ services:
         PACKAGE_SOURCE_URL: https://github.com/coredns/coredns/archive/v1.10.0.tar.gz
         PACKAGE_HEAD_URL: https://github.com/coredns/coredns.git
         PACKAGE_HEAD: false
+        GIT_CLONE_FLAGS: ""
         CACHEBUST: https://api.github.com/repos/issenn/docker-images-coredns/git/refs/heads/master
         GO111MODULE: on
         GOPROXY: https://proxy.golang.org,direct

@@ -2,6 +2,10 @@ variable "TAG" {
   default = "latest"
 }
 
+variable "GIT_CLONE_FLAGS" {
+  default = ""
+}
+
 variable "DOCKER_BUILDKIT" {
   default = true
 }
@@ -85,6 +89,7 @@ target "main" {
     PACKAGE_SOURCE_URL = "https://github.com/coredns/coredns/archive/v1.10.0.tar.gz"
     PACKAGE_HEAD_URL = "https://github.com/coredns/coredns.git"
     PACKAGE_HEAD = PACKAGE_HEAD
+    GIT_CLONE_FLAGS = GIT_CLONE_FLAGS
     CACHEBUST = "https://api.github.com/repos/issenn/docker-images-coredns/git/refs/heads/master"
     GO111MODULE = GO111MODULE
     GOPROXY = GOPROXY
