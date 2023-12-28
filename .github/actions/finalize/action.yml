@@ -114,7 +114,7 @@ runs:
         username: ${{ fromJSON(inputs.secrets).DOCKERHUB_USER || fromJSON(inputs.secrets).DOCKER_REGISTRY_USER }}
         password: ${{ fromJSON(inputs.secrets).DOCKERHUB_TOKEN || fromJSON(inputs.secrets).DOCKER_REGISTRY_PASS }}
     - name: Publish final tags
-      uses: akhilerm/tag-push-action@85bf542f43f5f2060ef76262a67ee3607cb6db37
+      uses: akhilerm/tag-push-action@f35ff2cb99d407368b5c727adbcc14a2ed81d509
       with:
         src: ${{ fromJSON(steps.docker_images.outputs.build)[0] }}:${{ env.PREFIX }}${{ github.event.pull_request.head.sha || github.event.head_commit.id }}
         dst: |
