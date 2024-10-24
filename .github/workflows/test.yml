@@ -19,7 +19,7 @@ jobs:
           token: ${{ secrets.PAT || secrets.GITHUB_TOKEN || github.token }}
 
       - name: Setup Node.js 16.x
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af
         with:
           node-version: 16.x
 
