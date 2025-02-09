@@ -101,14 +101,14 @@ runs:
 
     - name: Login to GitHub Container Registry
       continue-on-error: true
-      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+      uses: docker/login-action@327cd5a69de6c009b9ce71bce8395f28e651bf99
       with:
         registry: ghcr.io
         username: ${{ env.GHCR_USER }}
         password: ${{ fromJSON(inputs.secrets).GHCR_TOKEN || fromJSON(inputs.secrets).FLOWZONE_TOKEN }}
     - name: Login to Docker Hub
       continue-on-error: true
-      uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
+      uses: docker/login-action@327cd5a69de6c009b9ce71bce8395f28e651bf99
       with:
         registry: docker.io
         username: ${{ fromJSON(inputs.secrets).DOCKERHUB_USER || fromJSON(inputs.secrets).DOCKER_REGISTRY_USER }}
