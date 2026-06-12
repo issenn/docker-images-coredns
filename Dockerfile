@@ -2,7 +2,7 @@
 
 ARG BUILDPLATFORM="linux/amd64"
 
-FROM --platform=${BUILDPLATFORM} alpine:3.17 AS prepare
+FROM --platform=${BUILDPLATFORM} alpine:3.24 AS prepare
 
 ARG CACHEBUST
 
